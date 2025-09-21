@@ -1,40 +1,590 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Gallery - Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: white;
-    }
-    .box {
-      text-align: center;
-      padding: 20px 40px;
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    p {
-      font-size: 14px;
-      opacity: 0.8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Access your exclusive private gallery collection">
+    <title>StudyWeb — Private Gallery</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-dark: #0f1724;
+            --color-bg-light: #f7f7f8;
+            --color-accent: #3a9188;
+            --color-accent-hover: #2b6d66;
+            --color-text: #1a1a1a;
+            --color-text-light: #666;
+            --color-overlay: rgba(15, 23, 36, 0.85);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+            --max-width: 1200px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--color-text);
+            background-color: var(--color-bg-light);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .container {
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Header & Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(15, 23, 36, 0.9) 0%, rgba(58, 145, 136, 0.4) 100%), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%230f1724" width="100" height="100"/><path fill="%233a9188" opacity="0.2" d="M0 0h100v100H0z"/></svg>');
+            background-size: cover;
+            background-position: center;
+            color: var(--color-bg-light);
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease forwards 0.3s;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.875rem 2rem;
+            background-color: var(--color-accent);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover, .btn:focus {
+            background-color: var(--color-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(58, 145, 136, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:focus {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        .btn--secondary {
+            background-color: transparent;
+            border: 1px solid var(--color-bg-light);
+            color: var(--color-bg-light);
+        }
+
+        .btn--secondary:hover, .btn--secondary:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Preview Section */
+        .section {
+            padding: 5rem 1.5rem;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 2.5rem;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            aspect-ratio: 4/3;
+            background-color: var(--color-bg-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .preview-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: blur(8px) brightness(0.7);
+            transition: var(--transition);
+        }
+
+        .preview-item:hover .preview-image {
+            filter: blur(6px) brightness(0.8);
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(15, 23, 36, 0.5);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .preview-item:hover .preview-overlay {
+            opacity: 1;
+        }
+
+        .lock-icon {
+            font-size: 2rem;
+            color: white;
+        }
+
+        /* About Section */
+        .about {
+            background-color: var(--color-bg-dark);
+            color: var(--color-bg-light);
+            text-align: center;
+        }
+
+        .about-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .about p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--color-bg-dark);
+            color: var(--color-bg-light);
+            padding: 3rem 1.5rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-link {
+            color: var(--color-bg-light);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .back-to-top {
+            margin-top: 1.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal--visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--color-bg-light);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal--visible .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-text-light);
+        }
+
+        .modal-title {
+            margin-bottom: 1rem;
+        }
+
+        .modal-text {
+            margin-bottom: 2rem;
+            color: var(--color-text-light);
+        }
+
+        /* No JS Fallback */
+        .no-js-message {
+            padding: 1rem;
+            background-color: #ffecb3;
+            color: #7d6608;
+            text-align: center;
+            border-radius: var(--border-radius);
+            margin: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .hero {
+                min-height: 90vh;
+            }
+            
+            .section {
+                padding: 3rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .preview-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Welcome to Private Gallery</h1>
-    <p>This is a demo index page hosted on GitHub Pages.</p>
-  </div>
+    <!-- No JavaScript Fallback -->
+    <noscript>
+        <div class="no-js-message">
+            <p>JavaScript is required to access the Private Gallery. Please enable JavaScript in your browser settings.</p>
+        </div>
+    </noscript>
+
+    <!-- Header / Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Your Private Collection</h1>
+                <p>Exclusive access to curated works and personal archives</p>
+                <button id="enterGalleryBtn" class="btn" aria-label="Enter Private Gallery">
+                    Enter Private Gallery
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Preview Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Preview</h2>
+            <div class="preview-grid">
+                <!-- Preview Item 1 -->
+                <div class="preview-item" data-preview="1">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Preview Item 2 -->
+                <div class="preview-item" data-preview="2">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Preview Item 3 -->
+                <div class="preview-item" data-preview="3">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Preview Item 4 -->
+                <div class="preview-item" data-preview="4">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Preview Item 5 -->
+                <div class="preview-item" data-preview="5">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Preview Item 6 -->
+                <div class="preview-item" data-preview="6">
+                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect fill='%23333' width='400' height='300'/><text fill='%23555' font-family='sans-serif' font-size='30' x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'>Private Content</text></svg>" 
+                         alt="Gallery preview — blurred thumbnail" 
+                         class="preview-image" 
+                         loading="lazy" 
+                         width="400" 
+                         height="300">
+                    <div class="preview-overlay">
+                        <span class="lock-icon">🔒</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section about">
+        <div class="container">
+            <div class="about-content">
+                <h2 class="section-title">About the Collection</h2>
+                <p>This private gallery contains exclusive works, personal archives, and curated content available only to authorized viewers.</p>
+                <p>Each piece has been carefully selected to represent the finest examples in its category, protected for your exclusive access.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2023 StudyWeb — Private Gallery. All rights reserved.</p>
+                <nav class="footer-nav">
+                    <a href="#" class="footer-link">Terms</a>
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Contact</a>
+                </nav>
+                <button class="btn btn--secondary back-to-top" id="backToTopBtn">Back to top</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="previewModal" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="modalTitle">
+        <div class="modal-content">
+            <button class="modal-close" id="modalCloseBtn" aria-label="Close modal">×</button>
+            <h3 id="modalTitle" class="modal-title">Private Content</h3>
+            <p class="modal-text">This content is protected. Enter the private gallery to view the full collection.</p>
+            <button class="btn" id="modalEnterBtn">Enter Gallery</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
+            const enterGalleryBtn = document.getElementById('enterGalleryBtn');
+            const previewItems = document.querySelectorAll('.preview-item');
+            const modal = document.getElementById('previewModal');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+            const modalEnterBtn = document.getElementById('modalEnterBtn');
+            const backToTopBtn = document.getElementById('backToTopBtn');
+            
+            // Navigation function
+            function navigateToGallery() {
+                // Add a subtle fade-out effect before navigation
+                document.body.style.opacity = '0';
+                document.body.style.transition = 'opacity 0.3s ease';
+                
+                setTimeout(() => {
+                    // Required navigation method — do NOT use <a href="Private Gallery.html">
+                    window.location.href = 'Private Gallery.html';
+                }, 300);
+            }
+            
+            // Main CTA button event listener
+            enterGalleryBtn.addEventListener('click', navigateToGallery);
+            
+            // Modal Enter button event listener
+            modalEnterBtn.addEventListener('click', navigateToGallery);
+            
+            // Preview items click handler
+            previewItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Show modal when a preview item is clicked
+                    modal.classList.add('modal--visible');
+                    modal.setAttribute('aria-hidden', 'false');
+                    modal.setAttribute('aria-modal', 'true');
+                    
+                    // Trap focus inside modal for accessibility
+                    modalEnterBtn.focus();
+                });
+            });
+            
+            // Close modal button
+            modalCloseBtn.addEventListener('click', () => {
+                closeModal();
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('modal--visible')) {
+                    closeModal();
+                }
+            });
+            
+            function closeModal() {
+                modal.classList.remove('modal--visible');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.setAttribute('aria-modal', 'false');
+            }
+            
+            // Back to top functionality
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Initialize reduced motion if preferred
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.body.classList.add('reduce-motion');
+            }
+        });
+    </script>
 </body>
 </html>
