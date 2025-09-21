@@ -132,7 +132,19 @@
         <div class="lightbox-backdrop"></div>
         <div class="lightbox-content">
             <button class="lightbox-close">&times;</button>
-            <img id="lightbox-image" alt="">
+            
+            <div class="lightbox-controls">
+                <button class="zoom-btn" id="zoom-in-btn">+</button>
+                <button class="zoom-btn" id="zoom-out-btn">−</button>
+                <button class="zoom-btn" id="reset-zoom-btn">⌂</button>
+            </div>
+            
+            <div class="zoom-indicator" id="zoom-indicator">100%</div>
+            
+            <div class="lightbox-image-container" id="image-container">
+                <img id="lightbox-image" alt="">
+            </div>
+            
             <div class="lightbox-info">
                 <h3 id="lightbox-title"></h3>
                 <button id="download-btn" class="download-btn">
@@ -157,4 +169,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-
