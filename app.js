@@ -79,6 +79,11 @@ class EncryptedGallery {
             }
         });
         
+        // Prevent lightbox close when clicking on image or content
+        document.querySelector('.lightbox-content').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
         document.getElementById('download-btn').addEventListener('click', () => {
             this.downloadCurrentImage();
         });
