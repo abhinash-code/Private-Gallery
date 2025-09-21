@@ -225,7 +225,37 @@ class EncryptedGallery {
     showAdminScreen() {
         this.switchScreen('admin-screen');
         this.selectedFiles = [];
+        this.loadExistingImages(); // Load existing images first
         this.updateFilePreview();
+    }
+
+    async loadExistingImages() {
+        if (typeof encryptedImages === 'undefined' || !encryptedImages.images) return;
+        
+        try {
+            for (let i = 0; i < encryptedImages.images.length; i++) {
+                const imageData = encryptedImages.images[i];
+                
+                // Decrypt existing image to create a preview
+                const key = await this.deriveKey(this.currentPassword, imageData.salt, encryptedImages.iterations || 100000);
+                const decryptedBuffer = await this.decryptArrayBuffer(key, imageData.iv, imageData.data);
+                const blob = new Blob([decryptedBuffer], { type: imageData.type });
+                
+                // Convert blob to file-like object
+                const file = new File([blob], `${imageData.title}.${imageData.type.split('/')[1]}`, { type: imageData.type });
+                
+                this.selectedFiles.push({
+                    file: file,
+                    title: imageData.title,
+                    preview: URL.createObjectURL(blob),
+                    isExisting: true // Mark as existing image
+                });
+            }
+            
+            document.getElementById('export-btn').disabled = this.selectedFiles.length === 0;
+        } catch (error) {
+            console.error('Error loading existing images:', error);
+        }
     }
 
     switchScreen(screenId) {
@@ -531,20 +561,41 @@ class EncryptedGallery {
             div.className = 'file-preview';
             div.style.position = 'relative';
             
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            if (fileData.isExisting) {
+                // For existing images, use the preview URL
                 div.innerHTML = `
+                    <div class="existing-badge" style="position: absolute; top: 5px; left: 5px; background: #48bb78; color: white; 
+                         padding: 2px 6px; border-radius: 4px; font-size: 10px; z-index: 2;">EXISTING</div>
                     <button class="remove-file-btn" onclick="gallery.removeFile(${index})" 
                             style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; 
                                    border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; 
-                                   font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
-                    <img src="${e.target.result}" alt="Preview">
+                                   font-size: 12px; display: flex; align-items: center; justify-content: center; z-index: 2;">×</button>
+                    <img src="${fileData.preview}" alt="Preview" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
                     <input type="text" value="${fileData.title}" placeholder="Enter title" 
-                           onchange="gallery.updateFileTitle(${index}, this.value)">
+                           onchange="gallery.updateFileTitle(${index}, this.value)" 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; margin-top: 0.5rem;">
                 `;
                 resolve(div);
-            };
-            reader.readAsDataURL(fileData.file);
+            } else {
+                // For new images, read the file
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    div.innerHTML = `
+                        <div class="new-badge" style="position: absolute; top: 5px; left: 5px; background: #667eea; color: white; 
+                             padding: 2px 6px; border-radius: 4px; font-size: 10px; z-index: 2;">NEW</div>
+                        <button class="remove-file-btn" onclick="gallery.removeFile(${index})" 
+                                style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; 
+                                       border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; 
+                                       font-size: 12px; display: flex; align-items: center; justify-content: center; z-index: 2;">×</button>
+                        <img src="${e.target.result}" alt="Preview" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
+                        <input type="text" value="${fileData.title}" placeholder="Enter title" 
+                               onchange="gallery.updateFileTitle(${index}, this.value)"
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; margin-top: 0.5rem;">
+                    `;
+                    resolve(div);
+                };
+                reader.readAsDataURL(fileData.file);
+            }
         });
     }
     
