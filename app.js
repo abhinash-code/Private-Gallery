@@ -88,6 +88,37 @@ class EncryptedGallery {
             this.downloadCurrentImage();
         });
         
+        // Zoom controls
+        document.getElementById('zoom-in-btn').addEventListener('click', () => {
+            this.zoomImage(1.2);
+        });
+        
+        document.getElementById('zoom-out-btn').addEventListener('click', () => {
+            this.zoomImage(0.8);
+        });
+        
+        document.getElementById('reset-zoom-btn').addEventListener('click', () => {
+            this.resetZoom();
+        });
+        
+        // Mouse wheel zoom
+        document.getElementById('lightbox-image').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+            this.zoomImage(zoomFactor);
+        });
+        
+        // Image click to zoom
+        document.getElementById('lightbox-image').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.isZoomed) {
+                this.zoomImage(2);
+            }
+        });
+        
+        // Pan functionality
+        this.setupPanFunctionality();
+        
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeLightbox();
@@ -292,12 +323,147 @@ class EncryptedGallery {
         document.getElementById('lightbox-image').src = imageSrc;
         document.getElementById('lightbox-title').textContent = imageData.title || 'Untitled';
         document.getElementById('lightbox').classList.add('active');
+        
+        // Reset zoom state
+        this.resetZoom();
     }
 
     closeLightbox() {
         document.getElementById('lightbox').classList.remove('active');
         this.currentImageBlob = null;
         this.currentImageTitle = '';
+        this.resetZoom();
+    }
+
+    // Zoom and Pan functionality
+    zoomImage(factor) {
+        const image = document.getElementById('lightbox-image');
+        const indicator = document.getElementById('zoom-indicator');
+        
+        if (!this.currentZoom) this.currentZoom = 1;
+        
+        this.currentZoom *= factor;
+        
+        // Limit zoom range
+        if (this.currentZoom < 0.5) this.currentZoom = 0.5;
+        if (this.currentZoom > 5) this.currentZoom = 5;
+        
+        image.style.transform = `scale(${this.currentZoom}) translate(${this.panX || 0}px, ${this.panY || 0}px)`;
+        
+        // Update zoom indicator
+        indicator.textContent = `${Math.round(this.currentZoom * 100)}%`;
+        indicator.style.opacity = '1';
+        
+        // Hide indicator after 2 seconds
+        clearTimeout(this.indicatorTimeout);
+        this.indicatorTimeout = setTimeout(() => {
+            indicator.style.opacity = '0';
+        }, 2000);
+        
+        // Update image cursor and zoom state
+        this.isZoomed = this.currentZoom > 1;
+        if (this.isZoomed) {
+            image.classList.add('zoomed');
+            image.style.cursor = 'grab';
+        } else {
+            image.classList.remove('zoomed');
+            image.style.cursor = 'zoom-in';
+        }
+    }
+
+    resetZoom() {
+        const image = document.getElementById('lightbox-image');
+        const indicator = document.getElementById('zoom-indicator');
+        
+        this.currentZoom = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.isZoomed = false;
+        
+        image.style.transform = 'scale(1) translate(0px, 0px)';
+        image.classList.remove('zoomed');
+        image.style.cursor = 'zoom-in';
+        
+        indicator.textContent = '100%';
+        indicator.style.opacity = '1';
+        
+        clearTimeout(this.indicatorTimeout);
+        this.indicatorTimeout = setTimeout(() => {
+            indicator.style.opacity = '0';
+        }, 2000);
+    }
+
+    setupPanFunctionality() {
+        const image = document.getElementById('lightbox-image');
+        let isDragging = false;
+        let startX, startY;
+        let initialPanX = 0, initialPanY = 0;
+
+        image.addEventListener('mousedown', (e) => {
+            if (!this.isZoomed) return;
+            
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialPanX = this.panX || 0;
+            initialPanY = this.panY || 0;
+            
+            image.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || !this.isZoomed) return;
+
+            const deltaX = (e.clientX - startX) / this.currentZoom;
+            const deltaY = (e.clientY - startY) / this.currentZoom;
+            
+            this.panX = initialPanX + deltaX;
+            this.panY = initialPanY + deltaY;
+            
+            image.style.transform = `scale(${this.currentZoom}) translate(${this.panX}px, ${this.panY}px)`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                if (this.isZoomed) {
+                    image.style.cursor = 'grab';
+                }
+            }
+        });
+
+        // Touch events for mobile
+        image.addEventListener('touchstart', (e) => {
+            if (!this.isZoomed) return;
+            
+            const touch = e.touches[0];
+            isDragging = true;
+            startX = touch.clientX;
+            startY = touch.clientY;
+            initialPanX = this.panX || 0;
+            initialPanY = this.panY || 0;
+            
+            e.preventDefault();
+        });
+
+        image.addEventListener('touchmove', (e) => {
+            if (!isDragging || !this.isZoomed) return;
+            
+            const touch = e.touches[0];
+            const deltaX = (touch.clientX - startX) / this.currentZoom;
+            const deltaY = (touch.clientY - startY) / this.currentZoom;
+            
+            this.panX = initialPanX + deltaX;
+            this.panY = initialPanY + deltaY;
+            
+            image.style.transform = `scale(${this.currentZoom}) translate(${this.panX}px, ${this.panY}px)`;
+            e.preventDefault();
+        });
+
+        image.addEventListener('touchend', () => {
+            isDragging = false;
+        });
     }
 
     downloadCurrentImage() {
