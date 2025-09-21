@@ -310,14 +310,18 @@ class EncryptedGallery {
 
     handleFileSelection(event) {
         const files = Array.from(event.target.files);
-        this.selectedFiles = files.map(file => ({
+        
+        // Add new files to existing ones instead of replacing
+        const newFiles = files.map(file => ({
             file,
             title: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
             preview: null
         }));
         
+        this.selectedFiles = [...this.selectedFiles, ...newFiles];
+        
         this.updateFilePreview();
-        document.getElementById('export-btn').disabled = files.length === 0;
+        document.getElementById('export-btn').disabled = this.selectedFiles.length === 0;
     }
 
     async updateFilePreview() {
@@ -329,16 +333,40 @@ class EncryptedGallery {
             const preview = await this.createFilePreview(fileData, i);
             container.appendChild(preview);
         }
+        
+        // Show clear all button if files exist
+        if (this.selectedFiles.length > 0) {
+            const clearBtn = document.createElement('button');
+            clearBtn.textContent = `Clear All (${this.selectedFiles.length} files)`;
+            clearBtn.className = 'clear-all-btn';
+            clearBtn.style.cssText = `
+                background: #e53e3e; 
+                color: white; 
+                border: none; 
+                padding: 0.5rem 1rem; 
+                border-radius: 8px; 
+                margin-top: 1rem; 
+                cursor: pointer;
+                width: 100%;
+            `;
+            clearBtn.onclick = () => this.clearAllFiles();
+            container.appendChild(clearBtn);
+        }
     }
 
     createFilePreview(fileData, index) {
         return new Promise((resolve) => {
             const div = document.createElement('div');
             div.className = 'file-preview';
+            div.style.position = 'relative';
             
             const reader = new FileReader();
             reader.onload = (e) => {
                 div.innerHTML = `
+                    <button class="remove-file-btn" onclick="gallery.removeFile(${index})" 
+                            style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; 
+                                   border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; 
+                                   font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
                     <img src="${e.target.result}" alt="Preview">
                     <input type="text" value="${fileData.title}" placeholder="Enter title" 
                            onchange="gallery.updateFileTitle(${index}, this.value)">
@@ -347,6 +375,19 @@ class EncryptedGallery {
             };
             reader.readAsDataURL(fileData.file);
         });
+    }
+    
+    removeFile(index) {
+        this.selectedFiles.splice(index, 1);
+        this.updateFilePreview();
+        document.getElementById('export-btn').disabled = this.selectedFiles.length === 0;
+    }
+    
+    clearAllFiles() {
+        this.selectedFiles = [];
+        this.updateFilePreview();
+        document.getElementById('export-btn').disabled = true;
+        document.getElementById('file-input').value = '';
     }
 
     updateFileTitle(index, title) {
