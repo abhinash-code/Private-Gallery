@@ -576,8 +576,27 @@ class EncryptedGallery {
                            style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; margin-top: 0.5rem;">
                 `;
                 resolve(div);
-            } else {
+            } else if (fileData.isNew) {
                 // For new images, read the file
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    div.innerHTML = `
+                        <div class="new-badge" style="position: absolute; top: 5px; left: 5px; background: #667eea; color: white; 
+                             padding: 2px 6px; border-radius: 4px; font-size: 10px; z-index: 2;">NEW</div>
+                        <button class="remove-file-btn" onclick="gallery.removeFile(${index})" 
+                                style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; 
+                                       border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; 
+                                       font-size: 12px; display: flex; align-items: center; justify-content: center; z-index: 2;">×</button>
+                        <img src="${e.target.result}" alt="Preview" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
+                        <input type="text" value="${fileData.title}" placeholder="Enter title" 
+                               onchange="gallery.updateFileTitle(${index}, this.value)"
+                               style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem; margin-top: 0.5rem;">
+                    `;
+                    resolve(div);
+                };
+                reader.readAsDataURL(fileData.file);
+            } else {
+                // Fallback for files without specific markers
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     div.innerHTML = `
