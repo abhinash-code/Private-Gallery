@@ -74,9 +74,15 @@ class EncryptedGallery {
 
         // Lightbox events
         document.getElementById('lightbox').addEventListener('click', (e) => {
-            if (e.target.classList.contains('lightbox-backdrop') || e.target.classList.contains('lightbox-close')) {
+            if (e.target.classList.contains('lightbox-backdrop')) {
                 this.closeLightbox();
             }
+        });
+        
+        // Close button event
+        document.querySelector('.lightbox-close').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closeLightbox();
         });
         
         // Prevent lightbox close when clicking on image or content
